@@ -60,6 +60,30 @@ describe("AI chat endpoint", () => {
       }),
     )
   })
+  it("extracts the reply from GPT-OSS chat-completion output", async () => {
+    const run = vi.fn().mockResolvedValue({
+      id: "chatcmpl-test",
+      choices: [
+        {
+          message: { role: "assistant", content: "  Hello, learner!  " },
+        },
+      ],
+      usage: { completion_tokens: 3 },
+    })
+    const response = await onRequestPost({
+      request: new Request("https://pamana.example/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lang: "en",
+          messages: [{ role: "user", content: "Hi" }],
+        }),
+      }),
+      env: { AI: { run } },
+    })
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ reply: "Hello, learner!" })
+  })
   it("returns a generic error when Workers AI fails", async () => {
     const run = vi.fn().mockRejectedValue(new Error("provider details"))
     const response = await onRequestPost({
@@ -87,10 +111,7 @@ describe("AI chat endpoint", () => {
     const response = await onRequestPost({
       request: new Request("https://pamana.example/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Pamana-Diagnostics": "1",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang: "en",
           messages: [{ role: "user", content: "Hi" }],
@@ -110,13 +131,8 @@ describe("AI chat endpoint", () => {
       },
     )
     expect(JSON.stringify(log.mock.calls)).not.toContain("private")
-    await expect(response.json()).resolves.toMatchObject({
-      diagnostics: {
-        resultType: "object",
-        resultKeys: ["response", "errors"],
-        responseType: "object",
-        errorCodes: [3040],
-      },
+    await expect(response.json()).resolves.toEqual({
+      error: "The AI service returned an invalid response.",
     })
     log.mockRestore()
   })

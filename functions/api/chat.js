@@ -36,32 +36,19 @@ export async function onRequestPost({ request, env }) {
       502,
     )
   }
-  if (
-    typeof result !== "object" ||
-    result === null ||
-    !("response" in result) ||
-    typeof result.response !== "string"
-  ) {
-    const diagnostics = getResultDiagnostics(result)
+  const reply = getAIReply(result)
+  if (reply === null) {
     console.error("Workers AI returned an unexpected response shape.", {
       model: MODEL,
-      ...diagnostics,
+      ...getResultDiagnostics(result),
     })
-    return json(
-      {
-        error: "The AI service returned an invalid response.",
-        ...(request.headers.get("X-Pamana-Diagnostics") === "1"
-          ? { diagnostics }
-          : {}),
-      },
-      502,
-    )
+    return json({ error: "The AI service returned an invalid response." }, 502)
   }
-  const reply = result.response.trim()
-  if (!reply) {
+  const trimmedReply = reply.trim()
+  if (!trimmedReply) {
     return json({ error: "The AI service returned an empty response." }, 502)
   }
-  return json({ reply }, 200)
+  return json({ reply: trimmedReply }, 200)
 }
 function isChatRequest(value) {
   if (!value || typeof value !== "object") return false
@@ -110,6 +97,15 @@ function getResultDiagnostics(result) {
     responseType: typeof result.response,
     ...(errorCodes.length ? { errorCodes } : {}),
   }
+}
+function getAIReply(result) {
+  if (!result || typeof result !== "object") return null
+  if (typeof result.response === "string") return result.response
+  if (Array.isArray(result.choices)) {
+    const content = result.choices[0]?.message?.content
+    if (typeof content === "string") return content
+  }
+  return null
 }
 function json(body, status) {
   return new Response(JSON.stringify(body), {
