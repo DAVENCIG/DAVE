@@ -42,11 +42,20 @@ export async function onRequestPost({ request, env }) {
     !("response" in result) ||
     typeof result.response !== "string"
   ) {
+    const diagnostics = getResultDiagnostics(result)
     console.error("Workers AI returned an unexpected response shape.", {
       model: MODEL,
-      ...getResultDiagnostics(result),
+      ...diagnostics,
     })
-    return json({ error: "The AI service returned an invalid response." }, 502)
+    return json(
+      {
+        error: "The AI service returned an invalid response.",
+        ...(request.headers.get("X-Pamana-Diagnostics") === "1"
+          ? { diagnostics }
+          : {}),
+      },
+      502,
+    )
   }
   const reply = result.response.trim()
   if (!reply) {
@@ -93,7 +102,7 @@ function getResultDiagnostics(result) {
         .map((error) =>
           error && typeof error === "object" ? error.code : undefined,
         )
-        .filter((code) => typeof code === "number" || typeof code === "string")
+        .filter((code) => typeof code === "number" && Number.isFinite(code))
     : []
   return {
     resultType: Array.isArray(result) ? "array" : "object",

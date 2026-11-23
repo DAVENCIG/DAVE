@@ -87,7 +87,10 @@ describe("AI chat endpoint", () => {
     const response = await onRequestPost({
       request: new Request("https://pamana.example/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Pamana-Diagnostics": "1",
+        },
         body: JSON.stringify({
           lang: "en",
           messages: [{ role: "user", content: "Hi" }],
@@ -107,6 +110,14 @@ describe("AI chat endpoint", () => {
       },
     )
     expect(JSON.stringify(log.mock.calls)).not.toContain("private")
+    await expect(response.json()).resolves.toMatchObject({
+      diagnostics: {
+        resultType: "object",
+        resultKeys: ["response", "errors"],
+        responseType: "object",
+        errorCodes: [3040],
+      },
+    })
     log.mockRestore()
   })
 })
