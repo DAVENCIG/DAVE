@@ -1,6 +1,6 @@
 # PAMANA
 
-Installable, offline-capable web app for Araling Panlipunan, Grades 7–10 (React, TypeScript, Vite, Tailwind).
+Installable, offline-capable web app for Araling Panlipunan, Grades 7–10 (React, JavaScript/JSX, Vite, Tailwind).
 
 ## Run it in VS Code
 
@@ -33,7 +33,7 @@ To try it on a phone, use the **Network** address printed in the terminal while 
 
 ## Configure the AI Buddy on Cloudflare Pages
 
-The AI Buddy uses the Cloudflare Pages Function at `functions/api/chat.ts` and Cloudflare Workers AI. No provider API key is required.
+The AI Buddy uses the Cloudflare Pages Function at `functions/api/chat.js` and Cloudflare Workers AI. No provider API key is required.
 
 1. Deploy this project to Cloudflare Pages with the build command `pnpm run build` and output directory `dist`.
 2. In the Cloudflare dashboard, open the Pages project **Settings → Bindings → Add → Workers AI**. Set **Variable name** to `AI`. Configure production and preview separately if both environments should use AI.
@@ -48,9 +48,8 @@ Learners do not need to enter a key. Their AI questions are sent to the PAMANA F
 |---|---|
 | `pnpm dev` | Development server with hot reload |
 | `pnpm pwa` | Production build and preview (use this to test install/offline) |
-| `pnpm typecheck` | TypeScript check |
 | `pnpm test` | Unit tests |
-| `pnpm check` | Typecheck, tests and build |
+| `pnpm check` | Tests and production build |
 
 ## Deploying
 

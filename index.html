@@ -17,7 +17,7 @@
     <meta property="og:title" content="PAMANA · Alamin. Aralin. Tandaan." />
     <meta property="og:description" content="Mga aralin at pagsusulit sa Araling Panlipunan para sa Baitang 7 hanggang 10. Gumagana kahit offline." />
     <script>
-      // Apply theme and text size before first paint to avoid a flash (mirrors src/lib/preferences.ts).
+      // Apply theme and text size before first paint to avoid a flash (mirrors src/lib/preferences.js).
       try {
         var p = JSON.parse(localStorage.getItem("pamana-prefs") || "{}")
         var t = p.theme || "system"
@@ -30,6 +30,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
