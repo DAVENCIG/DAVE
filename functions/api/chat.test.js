@@ -78,4 +78,35 @@ describe("AI chat endpoint", () => {
       error: "The AI service could not be reached. Please try again.",
     })
   })
+  it("logs only the response shape when Workers AI returns an unexpected result", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    const run = vi.fn().mockResolvedValue({
+      response: { content: "private model output" },
+      errors: [{ code: 3040, message: "private provider details" }],
+    })
+    const response = await onRequestPost({
+      request: new Request("https://pamana.example/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lang: "en",
+          messages: [{ role: "user", content: "Hi" }],
+        }),
+      }),
+      env: { AI: { run } },
+    })
+    expect(response.status).toBe(502)
+    expect(log).toHaveBeenCalledWith(
+      "Workers AI returned an unexpected response shape.",
+      {
+        model: "@cf/openai/gpt-oss-20b",
+        resultType: "object",
+        resultKeys: ["response", "errors"],
+        responseType: "object",
+        errorCodes: [3040],
+      },
+    )
+    expect(JSON.stringify(log.mock.calls)).not.toContain("private")
+    log.mockRestore()
+  })
 })

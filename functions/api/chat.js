@@ -42,6 +42,10 @@ export async function onRequestPost({ request, env }) {
     !("response" in result) ||
     typeof result.response !== "string"
   ) {
+    console.error("Workers AI returned an unexpected response shape.", {
+      model: MODEL,
+      ...getResultDiagnostics(result),
+    })
     return json({ error: "The AI service returned an invalid response." }, 502)
   }
   const reply = result.response.trim()
@@ -79,6 +83,24 @@ function isChatRequest(value) {
     totalLength <= MAX_TOTAL_LENGTH &&
     body.messages[body.messages.length - 1]?.role === "user"
   )
+}
+function getResultDiagnostics(result) {
+  if (result === null || typeof result !== "object") {
+    return { resultType: typeof result }
+  }
+  const errorCodes = Array.isArray(result.errors)
+    ? result.errors
+        .map((error) =>
+          error && typeof error === "object" ? error.code : undefined,
+        )
+        .filter((code) => typeof code === "number" || typeof code === "string")
+    : []
+  return {
+    resultType: Array.isArray(result) ? "array" : "object",
+    resultKeys: Object.keys(result).slice(0, 20),
+    responseType: typeof result.response,
+    ...(errorCodes.length ? { errorCodes } : {}),
+  }
 }
 function json(body, status) {
   return new Response(JSON.stringify(body), {
